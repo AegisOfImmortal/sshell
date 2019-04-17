@@ -28,6 +28,10 @@ int isBuiltin(char *command)
 
 void read_command(struct CommandInput user_command){
     fgets(user_command.command, 512, stdin);
+    if (!isatty(STDIN_FILENO)) {
+        printf("%s", user_command.command);
+        fflush(stdout);
+    }
     user_command.length = (int)strlen(user_command.command);
     int filler = user_command.length - 1;
     while(filler < 512) {
@@ -64,7 +68,7 @@ void executeBuiltin(struct CommandInput user_command)
 {
     
     if(strcmp("exit", user_command.commands[0]) == 0) {
-        fprintf(stderr, "Bye...");
+        fprintf(stderr, "Bye...\n");
         exit(0);
     } else if(strcmp("pwd", user_command.commands[0]) == 0) {
         char *dir = getcwd(NULL, 4096);
@@ -75,7 +79,7 @@ void executeBuiltin(struct CommandInput user_command)
         int status = chdir(user_command.commands[1]);
         
         if(status != 0) {
-            fprintf(stdout, "Error: no such directory\n");
+            fprintf(stderr, "Error: no such directory\n");
             printStatusMessage(user_command.command, 1);
         } else {
             printStatusMessage(user_command.command, 0);
@@ -112,7 +116,7 @@ void executeCommand(struct CommandInput user_command)
 
 void printStatusMessage(char *command, int exitcode)
 {
-    fprintf(stdout, "+ completed '%s' [%d]\n", command, exitcode);
+    fprintf(stderr, "+ completed '%s' [%d]\n", command, exitcode);
 }
 
 int main(int argc, char *argv[])
@@ -132,3 +136,4 @@ int main(int argc, char *argv[])
     }
     return EXIT_SUCCESS;
 }
+
