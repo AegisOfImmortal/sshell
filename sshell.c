@@ -13,7 +13,6 @@
 #include <sys/stat.h>
 
 struct Command {
-    int maxArgCount;
     char *user_input;
     int max_command_size;
     char* commands[16];
@@ -27,7 +26,7 @@ struct Command {
 };
 
 struct Command parseCommand(struct Command cmd, char* original);
-struct Command splitPipe(struct Command cmd, char* original);
+struct Command parsePipe(struct Command cmd, char* original);
 void pipeCommand(struct Command command);
 bool file_exist (char *filename);
 void saveString(char* value, char** matrix, int size);
@@ -266,7 +265,7 @@ struct Command parseCommand(struct Command cmd, char* inputCommand)
 }
 
 //Detected |, Piping
-struct Command splitPipe(struct Command cmd, char* initial_command)
+struct Command parsePipe(struct Command cmd, char* initial_command)
 {
     //seperate commands
     for(int i = 0; i < 30; ++i){
@@ -342,8 +341,6 @@ void endingPipeCommand(int fd[2], struct Command PipeCommand, int pipeIndex) {
     } else {
         dup2(fd[0], STDIN_FILENO);
     }
-    
-    
     if (PipeCommand.inputFlag == true) {
         pipeInput(PipeCommand);
     } else if (PipeCommand.outputFlag == true) {
@@ -357,8 +354,7 @@ void endingPipeCommand(int fd[2], struct Command PipeCommand, int pipeIndex) {
 
 void middlePipeCommand(int fd1[2], int fd2[2], struct Command commandArg, int pipeIndex) {
     dup2(fd1[0], STDIN_FILENO);
-    dup2(fd2[1],STDOUT_FILENO);
-    
+    dup2(fd2[1], STDOUT_FILENO);
     if (commandArg.inputFlag == true) {
         pipeInput(commandArg);
     } else if (commandArg.outputFlag == true) {
@@ -371,10 +367,8 @@ void middlePipeCommand(int fd1[2], int fd2[2], struct Command commandArg, int pi
 }
 
 void pipeCommand(struct Command command) {
-    
     //parse the commands
-    command = splitPipe(command, command.user_input);
-    
+    command = parsePipe(command, command.user_input);
     if (strstr(command.pipeCommands[0], ">")) {
         fprintf(stderr,"Error: mislocated output redirection\n");
     } else if (strstr(command.pipeCommands[command.numPipe], "<")) {
@@ -382,10 +376,8 @@ void pipeCommand(struct Command command) {
     } else {
         int temp_retval = 0;
         int pipeIndex = 0;
-        
         int pipeOdd[2];
         int pipeEven[2];
-        
         int retvalues[command.numPipe + 1];
         int retvalIndex = 0;
         
